@@ -4,6 +4,7 @@ on:
   push:
     branches: ['**']
     tags: ['**']
+  delete:
 
 jobs:
   sync:
@@ -14,21 +15,29 @@ jobs:
       CODEUP_TOKEN: ${{ secrets.CODEUP_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-        if: ${{ !github.event.deleted }}
+        if: github.event_name == 'push'
         with:
           fetch-depth: 0
 
       # 新增/更新分支或 tag:把当前 ref 强推到 Codeup
       - name: Push to Codeup
-        if: ${{ !github.event.deleted }}
+        if: github.event_name == 'push'
         run: |
           DST="https://${CODEUP_USERNAME}:${CODEUP_TOKEN}@${CODEUP_REPO#https://}"
           git push --force "$DST" "HEAD:${GITHUB_REF}"
 
-      # 删除分支或 tag:ref 已不存在,跳过 checkout,直接删掉 Codeup 上的同名 ref
+      # 删除分支或 tag:delete 事件里 GITHUB_REF 是默认分支,须用 event.ref + ref_type 拼出被删的 ref
       - name: Delete on Codeup
-        if: ${{ github.event.deleted }}
+        if: github.event_name == 'delete'
+        env:
+          REF_NAME: ${{ github.event.ref }}
+          REF_TYPE: ${{ github.event.ref_type }}
         run: |
           DST="https://${CODEUP_USERNAME}:${CODEUP_TOKEN}@${CODEUP_REPO#https://}"
+          if [ "$REF_TYPE" = "tag" ]; then
+            FULL_REF="refs/tags/${REF_NAME}"
+          else
+            FULL_REF="refs/heads/${REF_NAME}"
+          fi
           git init -q .
-          git push "$DST" ":${GITHUB_REF}"
+          git push "$DST" ":${FULL_REF}"
