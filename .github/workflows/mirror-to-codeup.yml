@@ -8,16 +8,27 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    env:
+      CODEUP_REPO: https://codeup.aliyun.com/popstar/afzaici-jack/testcodeup.git
+      CODEUP_USERNAME: feng.ao-UuHjt
+      CODEUP_TOKEN: ${{ secrets.CODEUP_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+        if: ${{ !github.event.deleted }}
         with:
           fetch-depth: 0
 
+      # 新增/更新分支或 tag:把当前 ref 强推到 Codeup
       - name: Push to Codeup
-        env:
-          CODEUP_REPO: https://codeup.aliyun.com/popstar/afzaici-jack/testcodeup.git
-          CODEUP_USERNAME: feng.ao-UuHjt
-          CODEUP_TOKEN: ${{ secrets.CODEUP_TOKEN }}
+        if: ${{ !github.event.deleted }}
         run: |
           DST="https://${CODEUP_USERNAME}:${CODEUP_TOKEN}@${CODEUP_REPO#https://}"
           git push --force "$DST" "HEAD:${GITHUB_REF}"
+
+      # 删除分支或 tag:ref 已不存在,跳过 checkout,直接删掉 Codeup 上的同名 ref
+      - name: Delete on Codeup
+        if: ${{ github.event.deleted }}
+        run: |
+          DST="https://${CODEUP_USERNAME}:${CODEUP_TOKEN}@${CODEUP_REPO#https://}"
+          git init -q .
+          git push "$DST" ":${GITHUB_REF}"
