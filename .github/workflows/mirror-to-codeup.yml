@@ -15,8 +15,7 @@ jobs:
 
       - name: Push to Codeup
         env:
-          # 形如 codeup.aliyun.com/<组织ID>/<分组>/testcodeup.git,不带 https:// 和凭证
-          CODEUP_REPO: codeup.aliyun.com
+          CODEUP_REPO: https://codeup.aliyun.com/popstar/afzaici-jack/testcodeup.git
           CODEUP_USERNAME: feng.ao-UuHjt
           CODEUP_TOKEN: pt-iBLRHoWDTynnQxLoRs8yRxjS_42c5b885-5190-41d6-8bcc-d5807f69da98
         run: |
